@@ -382,3 +382,4 @@ runs. 😭
 But that's kind of the point.
 
 **Built as a learning + portfolio project.**
+_Last updated: August 2026._
