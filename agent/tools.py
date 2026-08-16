@@ -1,42 +1,46 @@
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from torchvision import transforms
 from PIL import Image
+from torchvision import models, transforms
+from torchvision.models import ResNet18_Weights
 
 
-# -----------------------------
-# CNN architecture from Part 2
-# -----------------------------
+# --------------------------------------------------
+# Paths
+# --------------------------------------------------
 
-class FashionCNN(nn.Module):
-    def __init__(self):
-        super().__init__()
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-        self.features = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
+RETURN_MODEL_PATH = (
+    BASE_DIR / "models" / "return_risk_model.pkl"
+)
 
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-        )
+RESNET_FEATURE_MODEL_PATH = (
+    BASE_DIR / "models" / "resnet18_feature_extractor.pt"
+)
 
-        self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(64 * 7 * 7, 128),
-            nn.ReLU(),
-            nn.Linear(128, 10),
-        )
+RESNET_CLASSIFIER_PATH = (
+    BASE_DIR / "models" / "resnet_feature_classifier.pkl"
+)
 
-    def forward(self, x):
-        x = self.features(x)
-        return self.classifier(x)
 
+# --------------------------------------------------
+# Device
+# --------------------------------------------------
+
+device = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
+
+
+# --------------------------------------------------
+# Class names
+# --------------------------------------------------
 
 CLASS_NAMES = [
     "T-shirt/top",
@@ -52,49 +56,14 @@ CLASS_NAMES = [
 ]
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-RETURN_MODEL_PATH = (
-    BASE_DIR / "models" / "return_risk_model.pkl"
-)
-
-IMAGE_MODEL_PATH = (
-    BASE_DIR / "models" / "product_classifier.pt"
-)
-
-
-# -----------------------------
-# Load Return Risk Model
-# -----------------------------
+# --------------------------------------------------
+# Tool 1: Return Risk
+# --------------------------------------------------
 
 return_risk_model = joblib.load(
     RETURN_MODEL_PATH
 )
 
-
-# -----------------------------
-# Load Image Classifier
-# -----------------------------
-
-device = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
-
-image_model = FashionCNN().to(device)
-
-image_model.load_state_dict(
-    torch.load(
-        IMAGE_MODEL_PATH,
-        map_location=device,
-    )
-)
-
-image_model.eval()
-
-
-# -----------------------------
-# Tool 1: Return Risk
-# -----------------------------
 
 def check_return_risk(order_features: dict) -> dict:
     """
@@ -129,26 +98,67 @@ def check_return_risk(order_features: dict) -> dict:
     }
 
 
-# -----------------------------
-# Tool 2: Product Classifier
-# -----------------------------
+# --------------------------------------------------
+# ResNet18 Feature Extractor
+# --------------------------------------------------
+
+weights = ResNet18_Weights.DEFAULT
+
+resnet18 = models.resnet18(
+    weights=None
+)
+
+resnet = nn.Sequential(
+    *list(resnet18.children())[:-1]
+)
+
+resnet.load_state_dict(
+    torch.load(
+        RESNET_FEATURE_MODEL_PATH,
+        map_location=device,
+    )
+)
+
+resnet = resnet.to(device)
+resnet.eval()
+
+
+# --------------------------------------------------
+# ResNet-compatible image transform
+# --------------------------------------------------
 
 image_transform = transforms.Compose([
-    transforms.Grayscale(num_output_channels=1),
-    transforms.Resize((28, 28)),
+    transforms.Resize((224, 224)),
+    transforms.Grayscale(
+        num_output_channels=3
+    ),
     transforms.ToTensor(),
     transforms.Normalize(
-        (0.5,),
-        (0.5,),
+        mean=weights.transforms().mean,
+        std=weights.transforms().std,
     ),
 ])
 
+
+# --------------------------------------------------
+# Logistic Regression classifier
+# --------------------------------------------------
+
+resnet_classifier = joblib.load(
+    RESNET_CLASSIFIER_PATH
+)
+
+
+# --------------------------------------------------
+# Tool 2: Product Image Classification
+# --------------------------------------------------
 
 def classify_product_image(
     image_path: str,
 ) -> dict:
     """
-    Run the real Part 2 CNN on a product image.
+    Run the final Part 2 ResNet18 feature-extraction
+    classifier on a product image.
     """
 
     path = Path(image_path)
@@ -158,45 +168,63 @@ def classify_product_image(
             f"Image not found: {image_path}"
         )
 
-    image = Image.open(path)
+    image = Image.open(
+        path
+    ).convert("L")
 
     image_tensor = image_transform(
         image
     ).unsqueeze(0).to(device)
 
     with torch.no_grad():
-        outputs = image_model(
-            image_tensor
-        )
+      features = resnet(
+        image_tensor
+    )
 
-        probabilities = torch.softmax(
-            outputs,
-            dim=1,
-        )
+    features = features.view(
+        features.size(0),
+        -1,
+    )
 
-        confidence, predicted_class = (
-            probabilities.max(dim=1)
-        )
+    features = features.cpu().numpy()
 
-    class_index = predicted_class.item()
+    probabilities = resnet_classifier.predict_proba(
+        features
+    )[0]
+
+    predicted_class = int(
+        np.argmax(probabilities)
+    )
+
+    confidence = float(
+        probabilities[predicted_class]
+    )
 
     return {
         "predicted_class": CLASS_NAMES[
-            class_index
+            predicted_class
         ],
         "confidence": round(
-            confidence.item(),
+            confidence,
             4,
         ),
         "confidence_percent": round(
-            confidence.item() * 100,
+            confidence * 100,
             2,
         ),
         "image_path": str(path),
     }
 
+
+# --------------------------------------------------
+# Local tool test
+# --------------------------------------------------
+
 if __name__ == "__main__":
-    print("Testing Part 1 return-risk tool...")
+
+    print(
+        "Testing Part 1 return-risk tool..."
+    )
 
     sample_order = {
         "product_category": "Electronics",
@@ -218,24 +246,31 @@ if __name__ == "__main__":
 
     print(result)
 
-    print("\nTesting Part 2 image classifier...")
+    print(
+        "\nTesting Part 2 ResNet image classifier..."
+    )
 
     sample_image = (
-    BASE_DIR
-    / "data"
-    / "sample_images"
-    / "ankle_boot.png"
-)
+        BASE_DIR
+        / "data"
+        / "sample_images"
+        / "ankle_boot.png"
+    )
 
     if sample_image.exists():
-        image_result = classify_product_image(
-            str(sample_image)
+
+        image_result = (
+            classify_product_image(
+                str(sample_image)
+            )
         )
 
         print(image_result)
 
     else:
+
         print(
             "Sample image not found:"
         )
+
         print(sample_image)

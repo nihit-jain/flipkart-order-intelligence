@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+from agent.tools import classify_product_image
 from agent.api import router as agent_router
 from fastapi.middleware.cors import CORSMiddleware
 import io
@@ -151,58 +154,31 @@ def predict_return(order: OrderFeatures):
 async def predict_image(
     file: UploadFile = File(...)
 ):
-
     contents = await file.read()
 
-    image = Image.open(
-        io.BytesIO(contents)
-    ).convert("L")
+    suffix = (
+        Path(file.filename).suffix
+        if file.filename
+        else ".png"
+    )
 
-    transform = transforms.Compose([
-        transforms.Resize((28, 28)),
-        transforms.ToTensor(),
-        transforms.Normalize(
-            (0.5,),
-            (0.5,),
-        ),
-    ])
+    temp_path = None
 
-    image_tensor = transform(image)
-    image_tensor = image_tensor.unsqueeze(0)
-    image_tensor = image_tensor.to(device)
+    try:
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=suffix,
+        ) as temp_file:
 
-    with torch.no_grad():
-        outputs = image_model(
-            image_tensor
+            temp_file.write(contents)
+            temp_path = temp_file.name
+
+        return classify_product_image(
+            temp_path
         )
 
-        probabilities = torch.softmax(
-            outputs,
-            dim=1,
-        )
-
-        confidence, predicted_class = (
-            probabilities.max(dim=1)
-        )
-
-    return {
-        "predicted_class": CLASS_NAMES[
-            predicted_class.item()
-        ],
-        "confidence": round(
-            confidence.item(),
-            4,
-        ),
-        "confidence_percent": round(
-            confidence.item() * 100,
-            2,
-        ),
-    }
-
-
-@app.get("/")
-def root():
-    return {
-        "message": "Flipkart Order Intelligence API",
-        "status": "online",
-    }
+    finally:
+        if temp_path:
+            Path(temp_path).unlink(
+                missing_ok=True
+            )
