@@ -168,16 +168,12 @@ If the system doesn't have enough relevant information, it responds with a safe 
 
 I wanted to actually test the system instead of running it once and calling it finished.
 
-### Retrieval evaluation
+### Part 2 — ResNet18 evaluation
 
-The current retrieval evaluation produced:
+The final ResNet18 transfer-learning pipeline was evaluated on 3,000 Fashion-MNIST test samples.
 
 ```text
-Mean Precision@3: 0.63
-Mean Recall@3:    1.00
-```
-
-The relevant policy was retrieved in all of the evaluation cases.
+Accuracy: 0.8693
 
 ### Representative transcript tests
 
