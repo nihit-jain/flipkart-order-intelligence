@@ -36,3 +36,6 @@ frontend/dist/
 # IDE
 .vscode/
 .idea/
+
+# Local virtual environments
+.venv-5/
