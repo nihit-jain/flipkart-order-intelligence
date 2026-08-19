@@ -1,0 +1,18 @@
+FLIPKART ORDER INTELLIGENCE
+01 — Normal Policy Question
+============================================================
+
+USER:
+What is the return policy for electronics?
+
+SYSTEM RESULT:
+Request type: policy
+Status: grounded
+
+Retrieved similarity score: 0.7343
+Groundedness threshold: 0.45
+
+Result type: policy
+
+FINAL ANSWER:
+Eligible electronics can be returned within 7 days of delivery subject to the product-specific return policy. (Source: Electronics Return Window)

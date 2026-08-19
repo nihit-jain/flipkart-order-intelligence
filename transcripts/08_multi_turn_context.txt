@@ -1,0 +1,19 @@
+FLIPKART ORDER INTELLIGENCE
+08 — Multi-Turn Context
+============================================================
+
+USER:
+What is the return policy for electronics?
+
+ASSISTANT:
+Eligible electronics can be returned within 7 days of delivery subject to the product-specific return policy. (Source: Electronics Return Window)
+
+USER:
+What about after that?
+
+ASSISTANT:
+Eligible electronics can be returned within 7 days of delivery subject to the product-specific return policy. (Source: Electronics Return Window)
+
+SECOND TURN RESULT:
+Request type: policy
+Status: grounded

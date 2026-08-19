@@ -1,0 +1,16 @@
+FLIPKART ORDER INTELLIGENCE
+04 — Return-Risk Prediction
+============================================================
+
+USER:
+What is the return risk for this order?
+
+SYSTEM RESULT:
+Request type: return_risk
+Status: None
+
+Result type: return_risk
+Prediction: Likely return
+
+FINAL ANSWER:
+Return probability: 57.76%. Prediction: Likely return.

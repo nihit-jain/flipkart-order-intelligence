@@ -1,0 +1,18 @@
+FLIPKART ORDER INTELLIGENCE
+02 — Ungrounded Policy Question
+============================================================
+
+USER:
+What is the weather today?
+
+SYSTEM RESULT:
+Request type: policy
+Status: ungrounded
+
+Retrieved similarity score: 0.1678
+Groundedness threshold: 0.45
+
+Result type: policy
+
+FINAL ANSWER:
+I don't have enough policy information to answer that question reliably.

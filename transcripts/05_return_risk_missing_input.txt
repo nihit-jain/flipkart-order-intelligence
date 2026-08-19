@@ -1,0 +1,15 @@
+FLIPKART ORDER INTELLIGENCE
+05 — Return-Risk Missing Input
+============================================================
+
+USER:
+What is the return risk for this order?
+
+SYSTEM RESULT:
+Request type: return_risk
+Status: missing_input
+
+Result type: return_risk
+
+FINAL ANSWER:
+I can calculate the return risk, but I need the order details first.

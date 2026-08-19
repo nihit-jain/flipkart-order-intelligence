@@ -1,0 +1,21 @@
+FLIPKART ORDER INTELLIGENCE
+09 — Session Isolation
+============================================================
+
+SESSION A:
+What is the return policy for electronics?
+
+SESSION B:
+What about after that?
+
+SYSTEM RESULT:
+Request type: policy
+Status: ungrounded
+
+Retrieved similarity score: 0.2289
+Groundedness threshold: 0.45
+
+Result type: policy
+
+FINAL ANSWER:
+I don't have enough policy information to answer that question reliably.
