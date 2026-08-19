@@ -1,0 +1,17 @@
+FLIPKART ORDER INTELLIGENCE
+06 — Product Image Classification
+============================================================
+
+USER:
+Classify this product image.
+
+SYSTEM RESULT:
+Request type: image
+Status: None
+
+Result type: image
+Predicted class: Ankle boot
+Confidence: 99.96%
+
+FINAL ANSWER:
+Predicted product: Ankle boot. Confidence: 99.96%.

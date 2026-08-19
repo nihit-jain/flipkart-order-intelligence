@@ -1,0 +1,15 @@
+FLIPKART ORDER INTELLIGENCE
+07 — Image Missing Input
+============================================================
+
+USER:
+Classify this product image.
+
+SYSTEM RESULT:
+Request type: image
+Status: missing_input
+
+Result type: image
+
+FINAL ANSWER:
+I can classify the product, but I need a product image first.
